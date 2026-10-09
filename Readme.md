@@ -117,6 +117,10 @@ yarn test:a11y
 yarn test:bdd
 ```
 
+The GitHub Actions **BDD** option runs only Cucumber scenarios tagged `@bdd`.
+Add `@bdd` to BDD features that should run in that selection; the **All** option
+continues to run every configured Cucumber feature.
+
 ### Run headed mode
 
 ```bash

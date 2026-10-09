@@ -1,3 +1,4 @@
+@bdd
 @memory
 Feature: Cucumber memory
   Scenario: Store and resolve a scenario value

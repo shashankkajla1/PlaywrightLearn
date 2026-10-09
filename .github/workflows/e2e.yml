@@ -52,7 +52,7 @@ jobs:
             UI) npm run test:ui ;;
             API) npm run test:api ;;
             Accessibility) npm run test:a11y ;;
-            BDD) npm run test:bdd ;;
+            BDD) npm run test:bdd -- --tags @bdd ;;
             All) npm run test:all ;;
             *) echo "Unsupported test suite: $SUITE" >&2; exit 1 ;;
           esac

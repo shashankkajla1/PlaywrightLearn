@@ -1,3 +1,4 @@
+@bdd
 Feature: Login functionality
     
     @current

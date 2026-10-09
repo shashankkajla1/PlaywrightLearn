@@ -160,3 +160,16 @@ Feature: Login functionality
 
 
 ## Your project instructions can recommend that agent automatically, but they cannot guarantee that every Copilot surface will switch to it.
+
+
+Create a GitHub Actions workflow that lets me manually run an E2E test suite from the GitHub Actions Run workflow dropdown.
+
+First inspect package.json, playwright.config.js, cucumber.js, and the project instructions. Use the existing npm scripts as the source of truth; do not change test code or add new dependencies.
+
+Add a workflow_dispatch workflow under .github/workflows/ with a required choice input named suite, offering the available suites: UI, API, Accessibility, BDD, and All. Map each choice to its existing script: test:ui, test:api, test:a11y, test:bdd, and test:all.
+
+Run on ubuntu-latest, set up a compatible Node.js version, install dependencies from the lockfile, install the Chromium browser and required system dependencies, then run only the selected suite. Upload generated test reports and results as workflow artifacts even if tests fail. Keep the workflow focused, use clear step names, and don’t expose secrets or commit credentials.
+
+After implementing it, validate the workflow structure and explain how to trigger it from GitHub Actions.
+
+The dropdown will let you pick the suite each time you manually start the workflow.

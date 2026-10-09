@@ -1,0 +1,9 @@
+{
+  "inventoryList": ".inventory_list",
+  "appLogo": "$common.appLogo",
+  "logoutButton": "$common.logoutButton",
+  "cartCheckOutBtn": "[data-test='shopping-cart-link']",
+  "inventoryItemName": "//*[data-test='inventory-item']",
+  "inventoryItemBtn": "//button[text()='Add to cart']",
+  "shoppingCartBadge": "[data-test='shopping-cart-badge']"
+}

@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+!.env.example
+playwright-report/
+blob-report/
+reports/
+test-results/
+playwright/.cache/
+.DS_Store
+coverage/
+.nyc_output/

@@ -1,0 +1,5 @@
+{
+  "dashboardTitle": "#inventory_container",
+  "productItem": ".inventory_item",
+  "shoppingCart": ".shopping_cart_link"
+}

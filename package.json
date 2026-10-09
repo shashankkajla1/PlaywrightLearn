@@ -1,0 +1,33 @@
+{
+  "name": "playwright-bdd-framework",
+  "version": "1.0.0",
+  "description": "Playwright automation framework with BDD, API, and a11y testing",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test:all",
+    "test:all": "npm run test:ui && npm run test:api && npm run test:a11y && npm run test:bdd",
+    "test:ui": "npx playwright test src/tests/ui/*.spec.js --reporter=line",
+    "test:api": "npx playwright test src/tests/api/*.spec.js --reporter=line",
+    "test:a11y": "npx playwright test src/tests/accessibility/*.spec.js --reporter=line",
+    "test:bdd": "npx cucumber-js --config cucumber.js",
+    "test:headed": "npx playwright test --headed",
+    "test:report": "npx playwright test --reporter=html",
+    "install:browser": "npx playwright install --with-deps chromium"
+  },
+  "keywords": [
+    "playwright",
+    "bdd",
+    "gherkin",
+    "api",
+    "a11y"
+  ],
+  "author": "Automation Engineer",
+  "license": "MIT",
+  "dependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@cucumber/cucumber": "^11.0.0",
+    "@playwright/test": "^1.49.1",
+    "dotenv": "^16.4.5",
+    "winston": "^3.3.1"
+  }
+}

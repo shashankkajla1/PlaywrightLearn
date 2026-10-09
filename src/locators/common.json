@@ -1,0 +1,5 @@
+{
+  "appLogo": ".app_logo",
+  "hamburgurIcon": ".bm-burger-button",
+  "logoutButton": "[data-test='logout-sidebar-link']"
+}

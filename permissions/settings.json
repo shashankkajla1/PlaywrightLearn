@@ -1,0 +1,31 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(npm run test:*)",
+			"Bash(npx playwright test:*)",
+			"Bash(git diff:*)",
+			"Bash(git status:*)",
+			"Read(./src/**)",
+			"Read(./package.json)",
+			"Read(./playwright.config.js)",
+			"Read(./cucumber.js)"
+		],
+		"deny": [
+			"Read(./.env)",
+			"Read(./.env.*)",
+			"Read(./data/users.json)",
+			"Read(./permissions/settings.json)",
+			"Read(**/*secret*)",
+			"Read(**/*credential*)",
+			"Read(**/*token*)",
+			"Bash(env:*)",
+			"Bash(printenv:*)",
+			"Bash(cat .env:*)",
+			"Bash(rm -rf:*)",
+			"Bash(git add:*)",
+			"Bash(git commit:*)",
+			"Bash(git push:*)",
+			"WebFetch"
+		]
+	}
+}

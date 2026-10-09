@@ -1,0 +1,128 @@
+Create a complete Playwright automation framework from scratch in JavaScript, designed for:
+
+1. BDD/Gherkin testing
+2. API testing
+3. Accessibility testing
+4. JSON-based locator management
+5. Reusable utilities and test specs
+6. Clean project structure for scalability and maintainability
+
+Requirements:
+- Use Playwright with JavaScript bindings.
+- Use Cucumber/Gherkin for BDD feature files and step definitions.
+- Support API testing using Playwright request context and custom API utilities.
+- Support accessibility validation using axe-core and Playwright accessibility checks.
+- Store all selectors/locators in JSON files instead of hardcoded values in step definitions or tests.
+- Create utilities for:
+  - browser setup
+  - page object abstraction
+  - API requests
+  - assertions
+  - accessibility checks
+  - logger/reporting
+  - environment configuration
+  - test data management
+  - screenshot/video capture
+- Include sample feature files, step definitions, and test specs for UI, API, and accessibility scenarios.
+- Ensure the project is modular and follows clean architecture.
+- Add package.json scripts for running:
+  - all tests
+  - UI tests
+  - BDD tests
+  - API tests
+  - accessibility tests
+  - headed mode
+  - report generation
+- Add proper .gitignore, .env.example, README.md, and configuration files.
+- Make the framework easy for future team usage and extensions.
+- Use best practices for test isolation, reusable hooks, and maintainable code.
+
+Project structure should be like this:
+
+project-root/
+  package.json
+  .gitignore
+  .env.example
+  README.md
+  playwright.config.js
+  cucumber.js
+  src/
+    config/
+      config.js
+      env.js
+    utils/
+      browserManager.js
+      apiUtils.js
+      logger.js
+      reportUtils.js
+      dataUtils.js
+      assertionUtils.js
+      a11yUtils.js
+      jsonReader.js
+    pages/
+      basePage.js
+    locators/
+      login.json
+      home.json
+      dashboard.json
+    steps/
+      commonSteps.js
+      loginSteps.js
+      apiSteps.js
+      a11ySteps.js
+    features/
+      login.feature
+      api.feature
+      accessibility.feature
+    tests/
+      ui/
+        login.spec.js
+      api/
+        userApi.spec.js
+      accessibility/
+        dashboard.a11y.spec.js
+    hooks/
+      hooks.js
+  data/
+    testData.json
+    users.json
+
+Functional requirements:
+- Feature files must be written in Gherkin syntax and map to step definitions.
+- Locators loaded from JSON files should support key-based access like:
+  - locatorData.login.username
+  - locatorData.home.dashboardButton
+- Step definitions should not contain raw selectors; they should call JSON-based locator utilities.
+- API tests should validate status codes, response bodies, headers, and response time.
+- Accessibility tests should check for common violations and produce readable reports.
+- Base utilities should support:
+  - page.goto()
+  - page.locator()
+  - retry/wait helpers
+  - test data injection
+  - environment switching
+  - screenshot on failure
+- Provide example test scenarios:
+  - login success
+  - invalid credentials
+  - fetch user API
+  - a11y scan of homepage
+  - broken page elements detection
+- Document how to run tests locally and in CI.
+- Make it production-ready and easy to extend.
+
+Please generate:
+1. Full project files with working code
+2. Sample feature files in Gherkin
+3. Sample JSON locator files
+4. Sample config and package scripts
+5. Clear project README with installation and usage steps
+6. Example test cases for UI, API, and accessibility
+7. A clean framework that is maintainable and follows automation best practices
+
+Keep the implementation in JavaScript, not TypeScript.
+Use Playwright's JS API and modern JavaScript syntax.
+
+Also include comments in the code to help explain architecture and usage.
+
+# Note - Deepeval is atoll for testing ≠

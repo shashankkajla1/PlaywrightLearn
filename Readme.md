@@ -129,6 +129,22 @@ yarn test:headed
 yarn test:report
 ```
 
+Each suite writes its Allure results into its own folder under `reports/`: `ui`,
+`api`, `accessibility`, or `bdd`. GitHub Actions generates a separate Allure HTML
+report in each suite folder. Playwright suites also produce a Playwright HTML report
+and retain traces, screenshots, and videos for failed tests; browser-based UI and
+accessibility failures include screenshots in Allure. BDD runs produce `cucumber.html`,
+and failed Cucumber scenarios include a screenshot attachment in both reports.
+
+Generate local Allure HTML reports after a test run with:
+
+```bash
+npx allure generate reports/api/allure-results --output reports/api/allure-report
+```
+
+Replace `api` with `ui`, `accessibility`, or `bdd` as appropriate. In GitHub Actions,
+download the `e2e-<suite>-reports` artifact from the completed run to view the reports.
+
 ## Example BDD Feature
 
 ```gherkin

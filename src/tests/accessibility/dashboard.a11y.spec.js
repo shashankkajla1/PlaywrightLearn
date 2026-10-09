@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('../fixtures');
 const AxeBuilder = require('@axe-core/playwright').default;
 
 test.describe('Accessibility tests', () => {

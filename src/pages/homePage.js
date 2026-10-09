@@ -11,7 +11,6 @@ class HomePage extends BasePage {
   async click_checkoutBtn() {
     const selector = await this.getLocatorFromJson('home', 'cartCheckOutBtn');
     await this.page.locator(selector).click();
-    this.page.waitForTimeout(3000)
   }
 
   async addProductToCart(productName) {
@@ -30,7 +29,6 @@ class HomePage extends BasePage {
         if(names_product[i].includes(productName)){
             await addToCart.nth(i).click();
             console.log("clicked successfully")
-            this.page.waitForTimeout(3000)
         }
     }
     const flag = await this.page.locator(shopingCart_visibilityCount).isVisible();

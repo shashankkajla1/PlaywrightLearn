@@ -1,5 +1,8 @@
 const { defineConfig, devices } = require('@playwright/test');
 
+const suite = process.env.ALLURE_SUITE || 'ui';
+const reportDirectory = `reports/${suite}`;
+
 module.exports = defineConfig({
   testDir: './src/tests',
   timeout: 30000,
@@ -8,8 +11,10 @@ module.exports = defineConfig({
   },
   reporter: [
     ['list'],
-    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['html', { outputFolder: `${reportDirectory}/playwright-report`, open: 'never' }],
+    ['allure-playwright', { resultsDir: `${reportDirectory}/allure-results` }],
   ],
+  outputDir: `${reportDirectory}/test-results`,
   fullyParallel: true,
   retries: 1,
   use: {

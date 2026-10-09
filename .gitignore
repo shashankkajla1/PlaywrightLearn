@@ -3,6 +3,8 @@ node_modules/
 .env.*
 !.env.example
 playwright-report/
+allure-results/
+allure-report/
 blob-report/
 reports/
 test-results/

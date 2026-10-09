@@ -52,6 +52,29 @@ jobs:
             *) echo "Unsupported test suite: $SUITE" >&2; exit 1 ;;
           esac
 
+      - name: Generate Allure HTML reports
+        if: always()
+        env:
+          SUITE: ${{ inputs.suite }}
+        run: |
+          case "$SUITE" in
+            UI) suites="ui" ;;
+            API) suites="api" ;;
+            Accessibility) suites="accessibility" ;;
+            BDD) suites="bdd" ;;
+            All) suites="ui api accessibility bdd" ;;
+            *) echo "Unsupported test suite: $SUITE" >&2; exit 1 ;;
+          esac
+
+          for suite in $suites; do
+            results="reports/$suite/allure-results"
+            if [ -d "$results" ] && find "$results" -type f -print -quit | grep -q .; then
+              npx allure generate "$results" --output "reports/$suite/allure-report"
+            else
+              echo "No Allure results found for $suite; skipping report generation."
+            fi
+          done
+
       - name: Upload test reports and results
         if: always()
         uses: actions/upload-artifact@v5

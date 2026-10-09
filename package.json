@@ -6,12 +6,12 @@
   "scripts": {
     "test": "npm run test:all",
     "test:all": "npm run test:ui && npm run test:api && npm run test:a11y && npm run test:bdd",
-    "test:ui": "npx playwright test src/tests/ui/*.spec.js --reporter=line",
-    "test:api": "npx playwright test src/tests/api/*.spec.js --reporter=line",
-    "test:a11y": "npx playwright test src/tests/accessibility/*.spec.js --reporter=line",
+    "test:ui": "cross-env ALLURE_SUITE=ui npx playwright test src/tests/ui/*.spec.js",
+    "test:api": "cross-env ALLURE_SUITE=api npx playwright test src/tests/api/*.spec.js",
+    "test:a11y": "cross-env ALLURE_SUITE=accessibility npx playwright test src/tests/accessibility/*.spec.js",
     "test:bdd": "npx cucumber-js --config cucumber.js",
-    "test:headed": "npx playwright test --headed",
-    "test:report": "npx playwright test --reporter=html",
+    "test:headed": "cross-env ALLURE_SUITE=ui npx playwright test --headed",
+    "test:report": "npm run test:ui",
     "install:browser": "npx playwright install --with-deps chromium"
   },
   "keywords": [
@@ -29,5 +29,11 @@
     "@playwright/test": "^1.49.1",
     "dotenv": "^16.4.5",
     "winston": "^3.3.1"
+  },
+  "devDependencies": {
+    "allure": "^3.20.1",
+    "allure-cucumberjs": "^3.13.0",
+    "allure-playwright": "^3.13.0",
+    "cross-env": "^10.1.0"
   }
 }

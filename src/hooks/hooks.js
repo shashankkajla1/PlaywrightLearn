@@ -1,4 +1,4 @@
-const { Before, After, AfterStep, setDefaultTimeout } = require('@cucumber/cucumber');
+const { Before, After, Status, setDefaultTimeout } = require('@cucumber/cucumber');
 const { chromium } = require('@playwright/test');
 const { createMemory } = require('../utils/memory');
 
@@ -17,14 +17,14 @@ Before(async function () {
 });
 
 
-After(async function () {
-  if (this.page) await this.page.close();
-  if (this.context) await this.context.close();
-  if (this.browser) await this.browser.close();
-});
-
-AfterStep(async function () {
-  if (this.page && this._test && this._test.outcome && this._test.outcome.status === 'failed') {
-    await this.page.screenshot({ path: `reports/failed-step-${Date.now()}.png`, fullPage: true });
+After(async function ({ result }) {
+  try {
+    if (result.status === Status.FAILED && this.page && !this.page.isClosed()) {
+      await this.attach(await this.page.screenshot({ fullPage: true }), 'image/png');
+    }
+  } finally {
+    if (this.page) await this.page.close();
+    if (this.context) await this.context.close();
+    if (this.browser) await this.browser.close();
   }
 });

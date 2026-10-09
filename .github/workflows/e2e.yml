@@ -16,12 +16,17 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
   e2e:
     name: Run ${{ inputs.suite }} tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Check out repository
@@ -75,6 +80,66 @@ jobs:
             fi
           done
 
+      - name: Prepare GitHub Pages report site
+        if: always()
+        id: prepare-pages
+        env:
+          SUITE: ${{ inputs.suite }}
+        run: |
+          case "$SUITE" in
+            UI) suites="ui:User Interface" ;;
+            API) suites="api:API" ;;
+            Accessibility) suites="accessibility:Accessibility" ;;
+            BDD) suites="bdd:BDD" ;;
+            All) suites="ui:User Interface api:API accessibility:Accessibility bdd:BDD" ;;
+            *) echo "Unsupported test suite: $SUITE" >&2; exit 1 ;;
+          esac
+
+          mkdir -p pages-site
+          cat > pages-site/index.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>E2E Test Reports</title>
+            <style>
+              body { font: 16px system-ui, sans-serif; max-width: 760px; margin: 4rem auto; padding: 0 1.5rem; color: #202124; }
+              h1 { margin-bottom: .5rem; }
+              p { color: #5f6368; }
+              li { margin: .8rem 0; }
+              a { color: #0969da; }
+            </style>
+          </head>
+          <body>
+            <h1>E2E Test Reports</h1>
+            <p>Select a suite to view its Allure report from this workflow run.</p>
+            <ul>
+          EOF
+
+          for entry in $suites; do
+            suite="${entry%%:*}"
+            label="${entry#*:}"
+            report="reports/$suite/allure-report"
+            if [ -f "$report/index.html" ]; then
+              mkdir -p "pages-site/$suite"
+              cp -R "$report/." "pages-site/$suite/"
+              printf '      <li><a href="%s/">%s</a></li>\n' "$suite" "$label" >> pages-site/index.html
+            else
+              echo "No Allure HTML report found for $suite; skipping it."
+            fi
+          done
+
+          cat >> pages-site/index.html <<'EOF'
+            </ul>
+          </body>
+          </html>
+          EOF
+
+          if ! grep -q '<li>' pages-site/index.html; then
+            echo "No Allure HTML reports were generated for this run." >> pages-site/index.html
+          fi
+
       - name: Upload test reports and results
         if: always()
         uses: actions/upload-artifact@v5
@@ -86,3 +151,24 @@ jobs:
             reports/
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Upload GitHub Pages artifact
+        if: always() && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.prepare-pages.outcome == 'success'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: pages-site
+
+      - name: Deploy reports to GitHub Pages
+        if: always() && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.prepare-pages.outcome == 'success'
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Add report link to workflow summary
+        if: always() && steps.deployment.outcome == 'success' && steps.deployment.outputs.page_url != ''
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: echo "Allure reports are available at [$PAGE_URL]($PAGE_URL)." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Explain skipped Pages deployment
+        if: always() && github.ref != format('refs/heads/{0}', github.event.repository.default_branch)
+        run: echo "GitHub Pages deployment is restricted to the default branch. Download the e2e-${{ inputs.suite }}-reports artifact for this run." >> "$GITHUB_STEP_SUMMARY"

@@ -143,7 +143,11 @@ npx allure generate reports/api/allure-results --output reports/api/allure-repor
 ```
 
 Replace `api` with `ui`, `accessibility`, or `bdd` as appropriate. In GitHub Actions,
-download the `e2e-<suite>-reports` artifact from the completed run to view the reports.
+the default-branch workflow run publishes the selected report to GitHub Pages and adds
+a clickable report link to the run summary. The downloadable
+`e2e-<suite>-reports` artifact remains available for every run. Configure the
+repository's **Settings → Pages → Build and deployment → Source** as **GitHub Actions**
+to enable deployment. Runs from non-default branches do not deploy Pages.
 
 ## Example BDD Feature
 

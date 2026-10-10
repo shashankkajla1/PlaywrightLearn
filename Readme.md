@@ -153,6 +153,62 @@ a clickable report link to the run summary. The downloadable
 repository's **Settings → Pages → Build and deployment → Source** as **GitHub Actions**
 to enable deployment. Runs from non-default branches do not deploy Pages.
 
+## CI Playwright UI Auto-Healer
+
+For the architecture, setup walkthrough, safeguards, and troubleshooting, see
+[heal.md](./heal.md).
+
+When the **Swag App Tests** workflow fails on the default branch, the
+**Playwright UI Auto-Heal** workflow can diagnose a single failed native UI test.
+It will only propose replacing one existing selector string in a locator JSON file
+used by that spec. The workflow reruns that exact test once without retries and
+opens a **draft PR only if that rerun passes**. It never merges a PR, edits test
+assertions, or changes application code. If the failure is ambiguous, is not a
+native UI test, or does not appear to be a safely repairable selector issue, it
+abstains. The normal E2E workflow runs again on the generated PR for independent
+CI review.
+
+Run the local guardrail tests for the auto-healer with:
+
+```bash
+node --test scripts/ci-auto-heal.test.js
+```
+
+This workflow sends the failed test source, its locator JSON, and a bounded,
+redacted section of the failure logs to NVIDIA NIM. To keep that data private, it
+requires a self-hosted Linux x64 GitHub Actions runner that can reach your private
+NIM deployment. Do not use a shared or persistent workstation as the runner; use
+an isolated, ephemeral runner and clean it after each job.
+
+### One-time GitHub setup
+
+1. Register an isolated self-hosted runner for this repository with the labels
+   `self-hosted`, `linux`, `x64`, and `nvidia-nim`. Install the runner's required
+   Playwright Chromium system dependencies and tools, and ensure it can access
+   your private HTTPS NIM service and npm registry.
+2. In **Settings → Environments**, create the `ci-auto-heal` environment. Add:
+   - Variable `NVIDIA_NIM_BASE_URL`: the private OpenAI-compatible API base URL,
+     ending in `/v1` (for example, `https://nim.internal.example/v1`).
+   - Variable `NVIDIA_MODEL`: the model name served by that NIM deployment.
+   - Secret `NVIDIA_API_KEY`: the private endpoint's authentication key.
+   - Secret `AUTO_HEAL_APP_ID` and secret `AUTO_HEAL_APP_PRIVATE_KEY`: credentials
+     for a GitHub App installed only on this repository.
+3. Give that GitHub App only **Contents: read and write** and **Pull requests: read
+   and write** permissions, then install it on this repository. Its token is used
+   to create the draft PR and ensure the PR-triggered E2E checks run. Never use a
+   broad personal access token for this workflow.
+4. In **Settings → Actions → General**, allow GitHub Actions to create pull
+   requests if required by repository policy. Do not enable automatic merging.
+5. Keep the repository default branch protected with required reviews and the
+   normal E2E checks. The auto-healer only runs for failed E2E runs whose source
+   is the default branch in this same repository; it does not process fork PRs or
+   feature-branch failures.
+
+Configure `ci-auto-heal` without required reviewers if the diagnosis should run
+without manual approval. Keep any `github-pages` deployment protection you want:
+only the default-branch deployment job receives Pages write permissions, and
+pull-request test jobs never receive those permissions or deploy reports.
+
 ## Example BDD Feature
 
 ```gherkin

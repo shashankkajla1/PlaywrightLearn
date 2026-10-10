@@ -1,0 +1,145 @@
+name: Playwright UI Auto-Heal
+
+on:
+  workflow_run:
+    workflows: ["Swag App Tests"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: auto-heal-ui-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  diagnose-and-propose:
+    name: Diagnose failed UI test and propose a fix
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_branch == github.event.repository.default_branch &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: [self-hosted, linux, x64, nvidia-nim]
+    timeout-minutes: 20
+    environment: ci-auto-heal
+
+    steps:
+      - name: Check out the exact failed commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Collect failed workflow logs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/failed-run-logs.zip"
+          log_directory="$RUNNER_TEMP/failed-run-logs"
+          mkdir -p "$log_directory"
+          node scripts/ci-auto-heal.js download-logs "$RUN_ID" "$archive"
+          unzip -oq "$archive" -d "$log_directory"
+          find "$log_directory" -type f -name '*.txt' -print0 \
+            | sort -z \
+            | xargs -0 cat > "$RUNNER_TEMP/failed-run.log"
+          test -s "$RUNNER_TEMP/failed-run.log"
+
+      - name: Find a failed native UI spec
+        id: locate
+        run: node scripts/ci-auto-heal.js locate "$RUNNER_TEMP/failed-run.log"
+
+      - name: Install project dependencies
+        if: steps.locate.outputs.spec != ''
+        run: npm ci
+
+      - name: Install Chromium browser
+        if: steps.locate.outputs.spec != ''
+        run: npx playwright install chromium
+
+      - name: Diagnose failure using private NVIDIA NIM
+        if: steps.locate.outputs.spec != ''
+        id: analyze
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_NIM_BASE_URL: ${{ vars.NVIDIA_NIM_BASE_URL }}
+          NVIDIA_MODEL: ${{ vars.NVIDIA_MODEL || 'nvidia/llama-3.3-nemotron-super-49b-v1.5' }}
+        run: node scripts/ci-auto-heal.js analyze "$RUNNER_TEMP/failed-run.log" "$RUNNER_TEMP/heal-result.json"
+
+      - name: Apply validated locator-only proposal
+        if: steps.analyze.outputs.decision == 'repair'
+        run: node scripts/ci-auto-heal.js apply "$RUNNER_TEMP/heal-result.json"
+
+      - name: Rerun the affected UI spec
+        if: steps.analyze.outputs.decision == 'repair'
+        env:
+          ALLURE_SUITE: ui
+          GREP: ${{ steps.locate.outputs.grep }}
+          SPEC: ${{ steps.locate.outputs.spec }}
+        run: npx playwright test "$SPEC" --grep "$GREP" --retries=0 --reporter=line
+
+      - name: Upload repair verification results
+        if: always() && steps.locate.outputs.spec != ''
+        uses: actions/upload-artifact@v5
+        with:
+          name: auto-heal-verification-${{ github.event.workflow_run.id }}
+          path: reports/ui/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Create GitHub App token for PR and PR checks
+        if: success() && steps.analyze.outputs.decision == 'repair'
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.AUTO_HEAL_APP_ID }}
+          private-key: ${{ secrets.AUTO_HEAL_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Open a draft pull request for review
+        if: success() && steps.analyze.outputs.decision == 'repair'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          branch: ci/auto-heal-${{ github.event.workflow_run.id }}
+          base: ${{ github.event.repository.default_branch }}
+          add-paths: src/locators/*.json
+          delete-branch: true
+          draft: true
+          commit-message: "test: repair verified Playwright UI locator"
+          title: "test: auto-heal UI locator after failed run"
+          body: |
+            This draft PR contains a locator-only proposal from the CI auto-healer.
+
+            - Failed workflow: ${{ github.event.workflow_run.html_url }}
+            - Affected UI spec: `${{ steps.locate.outputs.spec }}`
+            - NVIDIA diagnosis: ${{ steps.analyze.outputs.reason }}
+            - Verification: the affected spec passed before this PR was opened.
+
+            Review the selector change and confirm it preserves the test's intent. This PR is never merged automatically. The GitHub App token causes normal pull-request checks to run.
+
+      - name: Report skipped or declined repair
+        if: always() && (steps.locate.outputs.spec == '' || steps.analyze.outputs.decision == 'abstain')
+        env:
+          SPEC: ${{ steps.locate.outputs.spec }}
+          REASON: ${{ steps.analyze.outputs.reason }}
+        run: |
+          if [ -z "$SPEC" ]; then
+            echo "## CI auto-heal" >> "$GITHUB_STEP_SUMMARY"
+            echo "Skipped: failure logs did not identify exactly one native UI test." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## CI auto-heal" >> "$GITHUB_STEP_SUMMARY"
+            echo "**No change proposed.** $REASON" >> "$GITHUB_STEP_SUMMARY"
+          fi
